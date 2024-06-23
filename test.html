@@ -1,0 +1,166 @@
+<p id="stat"></p>
+
+<div class="section">
+    <button id="button" onclick="createOffer()">Offer:</button>
+    <textarea id="offer" placeholder="Paste offer here. And press Enter"></textarea>
+</div>
+
+<div class="section">
+    <div>Answer:</div>
+    <div class="answer-container">
+        <textarea id="answer"></textarea>
+        <button id="copyButton">Copy from Offer</button>
+    </div>
+</div>
+
+<div class="section">
+    <input id="chat" placeholder="Chat"><br>
+    <pre id="output">Chat: </pre>
+</div>
+
+<script>
+    let chat = document.getElementById('chat');
+    let button = document.getElementById('button');
+    let offer = document.getElementById('offer');
+    let answer = document.getElementById('answer');
+    const output = document.getElementById('output');
+
+    const config = {
+        iceServers: [{
+            urls: "stun:stun.l.google.com:19302" // list of free STUN servers: https://gist.github.com/zziuni/3741933
+        }]
+    };
+    const pc = new RTCPeerConnection(config);
+    const dc = pc.createDataChannel("chat", {
+        negotiated: true,
+        id: 0
+    });
+    const log = msg => output.innerHTML += `<br>${msg}`;
+    dc.onopen = () => chat.select();
+    dc.onmessage = e => log(`> ${e.data}`);
+    pc.oniceconnectionstatechange = e => log(pc.iceConnectionState);
+
+
+    chat.onkeypress = function (e) {
+        if (e.keyCode != 13) return;
+        dc.send(chat.value);
+        log(chat.value);
+        chat.value = "";
+    };
+
+    async function createOffer() {
+        button.disabled = true;
+        await pc.setLocalDescription(await pc.createOffer());
+        pc.onicecandidate = ({
+                                 candidate
+                             }) => {
+            if (candidate) return;
+            offer.value = pc.localDescription.sdp;
+            offer.select();
+            answer.placeholder = "Paste answer here. And Press Enter";
+        };
+    }
+
+    offer.onkeypress = async function (e) {
+        if (e.keyCode != 13 || pc.signalingState != "stable") return;
+        button.disabled = offer.disabled = true;
+        await pc.setRemoteDescription({
+            type: "offer",
+            sdp: offer.value
+        });
+        await pc.setLocalDescription(await pc.createAnswer());
+        pc.onicecandidate = ({
+                                 candidate
+                             }) => {
+            if (candidate) return;
+            answer.focus();
+            answer.value = pc.localDescription.sdp;
+            answer.select();
+        };
+    };
+
+    answer.onkeypress = function (e) {
+        if (e.keyCode != 13 || pc.signalingState != "have-local-offer") return;
+        answer.disabled = true;
+        pc.setRemoteDescription({
+            type: "answer",
+            sdp: answer.value
+        });
+    };
+
+    pc.onconnectionstatechange = ev => handleChange();
+    pc.oniceconnectionstatechange = ev => handleChange();
+
+    function handleChange() {
+        let stat = 'ConnectionState: <strong>' + pc.connectionState + '</strong> IceConnectionState: <strong>' + pc.iceConnectionState + '</strong>';
+        document.getElementById('stat').innerHTML = stat;
+        console.log('%c' + new Date().toISOString() + ': ConnectionState: %c' + pc.connectionState + ' %cIceConnectionState: %c' + pc.iceConnectionState,
+            'color:yellow', 'color:orange', 'color:yellow', 'color:orange');
+    }
+
+    handleChange();
+</script>
+
+
+<style>
+    body {
+        background-color: #2b2b2b;
+        color: #e0e0e0;
+        font-family: Arial, sans-serif;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .section {
+        width: 100%;
+        max-width: 600px; /* Limit maximum width */
+        margin-bottom: 20px; /* Spacing between sections */
+    }
+
+    textarea, #chat {
+        background-color: #3f3f3f;
+        color: #e0e0e0;
+        border: 1px solid #5c5c5c;
+        padding: 8px;
+        width: 100%; /* Full width */
+        resize: vertical; /* Allow vertical resizing */
+    }
+
+    #offer {
+        height: 150px; /* Set height as needed */
+    }
+
+    .answer-container {
+        display: flex;
+        align-items: center;
+        margin-top: 10px;
+    }
+
+    #answer {
+        flex: 1; /* Take remaining space */
+        margin-right: 10px;
+        height: 150px; /* Set height as needed */
+    }
+
+    #copyButton {
+        background-color: #3f3f3f;
+        color: #ffffff;
+        padding: 8px 16px;
+        border: none;
+        cursor: pointer;
+    }
+
+    #output {
+        background-color: #3f3f3f;
+        color: #e0e0e0;
+        padding: 10px;
+        border: 1px solid #5c5c5c;
+        width: 100%;
+        overflow-y: auto; /* Enable vertical scrollbar if needed */
+        margin-top: 10px;
+    }
+
+
+</style>
