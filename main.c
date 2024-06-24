@@ -48,12 +48,13 @@ void render_current_sdp(struct rtc_state* state) {
     size_t candidate_size;
     char* base = sdp + current_sdp_len;
     for (int i = 0; i < state->local_candidate_count; i++) {
+        *(base++) = 'a';
+        *(base++) = '=';
         candidate_size = strlen(state->local_candidates[i]);
         memcpy(base, state->local_candidates[i], candidate_size);
         base += candidate_size;
-        *base = '\r';
-        *(base + 1) = '\n';
-        base += 2;
+        *(base++) = '\r';
+        *(base++) = '\n';
     }
     *base = 0;
 
