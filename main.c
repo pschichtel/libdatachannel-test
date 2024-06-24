@@ -142,7 +142,12 @@ int main(void) {
         return 1;
     }
 
-    int dc = rtcCreateDataChannel(pc, "test");
+    rtcDataChannelInit channelInit = {
+            .negotiated = true,
+            .stream = 0,
+            .manualStream = true,
+    };
+    int dc = rtcCreateDataChannelEx(pc, "test", &channelInit);
     result = rtcSetErrorCallback(dc, on_data_channel_error);
     if (result) {
         printf("Failed: %d", result);
