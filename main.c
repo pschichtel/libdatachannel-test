@@ -107,18 +107,26 @@ int main(void) {
         printf("A STUN server is required!\n");
         return 1;
     }
-    struct rtc_state state = {0};
 
-    rtcInitLogger(RTC_LOG_WARNING, &logger);
+    printf("Using STUN server: %s\n", stun_server);
+    struct rtc_state state = {0};
+    const char* stun_server_list[1] = { stun_server };
+
+    rtcInitLogger(RTC_LOG_DEBUG, &logger);
 
     rtcConfiguration config = {
             .iceServersCount = 1,
-            .iceServers = &stun_server,
+            .iceServers = stun_server_list,
             .disableAutoNegotiation = false,
             .forceMediaTransport = false,
     };
 
     int pc = rtcCreatePeerConnection(&config);
+    if (pc < 0) {
+        printf("Failed to create PeerConnection: %d\n", pc);
+        return 1;
+    }
+
     rtcSetUserPointer(pc, &state);
     int result;
     result = rtcSetLocalDescriptionCallback(pc, on_local_description);
