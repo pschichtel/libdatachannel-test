@@ -1,3 +1,6 @@
 [submodule "libdatachannel"]
 	path = libdatachannel
 	url = https://github.com/paullouisageneau/libdatachannel.git
+[submodule "cmake-conan"]
+	path = cmake-conan
+	url = https://github.com/conan-io/cmake-conan.git

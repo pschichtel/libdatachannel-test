@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.28)
+cmake_minimum_required(VERSION 3.20)
 project(libdatachannel_test C CXX)
 
 set(CMAKE_C_STANDARD 17)
